@@ -286,6 +286,100 @@ with tab1:
             st.session_state['df_proc'] = df_proc
             st.session_state['df_raw'] = df_raw
 
+            # ── Traffic Congestion Visual ──
+            avg_congestion = np.mean(preds)
+            if avg_congestion < 0.6:
+                status = "✅ LOW TRAFFIC (CLEAR)"
+                color = "#34d399" # Green
+                anim_dur = "0.5s" # Fast moving
+                window_kb = "64"
+                window_pct = "100%"
+            elif avg_congestion < 1.6:
+                status = "⚠️ MEDIUM TRAFFIC"
+                color = "#fbbf24" # Yellow
+                anim_dur = "2.0s" # Medium moving
+                window_kb = "32"
+                window_pct = "50%"
+            else:
+                status = "🛑 HIGH CONGESTION!"
+                color = "#f87171" # Red
+                anim_dur = "6.0s" # Slow moving / clogged
+                window_kb = "8"
+                window_pct = "15%"
+
+            unique_id = color.replace('#','')
+            html_string = f"""
+<style>
+@keyframes pulse-glow-{unique_id} {{
+0% {{ box-shadow: 0 0 5px {color}, 0 0 10px {color}; }}
+50% {{ box-shadow: 0 0 20px {color}, 0 0 30px {color}; }}
+100% {{ box-shadow: 0 0 5px {color}, 0 0 10px {color}; }}
+}}
+@keyframes flow-data-{unique_id} {{
+0% {{ background-position: 200px 0; }}
+100% {{ background-position: 0 0; }}
+}}
+.traffic-pipe-{unique_id} {{
+height: 35px;
+background: #0b0f1a;
+border-radius: 18px;
+border: 2px solid rgba(255,255,255,0.05);
+position: relative;
+overflow: hidden;
+margin: 0;
+width: {window_pct};
+transition: width 1s ease-in-out;
+box-shadow: inset 0 0 15px rgba(0,0,0,0.9), 0 0 15px {color};
+}}
+.data-stream-{unique_id} {{
+width: 200%;
+height: 100%;
+background-image: repeating-linear-gradient(
+-45deg,
+{color} 0,
+{color} 15px,
+transparent 15px,
+transparent 30px
+);
+animation: flow-data-{unique_id} {anim_dur} linear infinite;
+opacity: 0.85;
+}}
+.status-badge-{unique_id} {{
+animation: pulse-glow-{unique_id} 2s infinite;
+color: #111827;
+background: {color};
+padding: 6px 18px;
+border-radius: 20px;
+font-family: 'Space Mono', monospace;
+font-weight: 700;
+font-size: 1.1rem;
+display: inline-block;
+}}
+.window-size-label {{
+font-family: 'Space Mono', monospace;
+font-size: 1.05rem;
+color: #e0e6f0;
+margin-top: 20px;
+}}
+</style>
+<div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(56,189,248,0.2); border-radius: 12px; padding: 2rem; text-align: center; margin-top: 2rem;">
+<div style="font-family: 'Space Mono', monospace; font-size: 1.2rem; color: #38bdf8; margin-bottom: 15px; letter-spacing: 1px; text-transform: uppercase;">Real-Time Congestion Control</div>
+<div class="status-badge-{unique_id}">{status}</div>
+<br>
+<div class="window-size-label">
+Dynamic TCP Window Size (cwnd): <strong style="color: {color}; font-size: 1.2rem;">{window_kb} KB</strong>
+</div>
+<div style="width: 90%; background: rgba(0,0,0,0.4); height: 50px; border-radius: 25px; margin: 15px auto 20px; border: 1px dashed rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: flex-start; padding: 5px;">
+<div class="traffic-pipe-{unique_id}">
+<div class="data-stream-{unique_id}"></div>
+</div>
+</div>
+<div style="font-size: 0.9rem; color: #94a3b8; font-family: 'Inter', sans-serif;">When the AI detects high traffic, the simulated TCP connection throttles the window size to prevent packet collision and loss.</div>
+</div>
+"""
+            st.markdown(html_string, unsafe_allow_html=True)
+
+
             # ── Metrics Row ──
             st.markdown("<br>", unsafe_allow_html=True)
             c1, c2, c3, c4 = st.columns(4)
@@ -342,8 +436,88 @@ with tab2:
     df_proc = st.session_state['df_proc']
     df_raw = st.session_state['df_raw']
 
-    st.markdown('<div class="section-header">Traffic Overview</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">TCP Congestion Window (AIMD Simulation)</div>', unsafe_allow_html=True)
 
+    # ── TCP AIMD Simulation Graph ──
+    sim_length = min(len(preds), 40) # 40 looks cleaner than 60
+    sim_preds = preds[:sim_length]
+    
+    cwnd_history = []
+    events = [] # stores (x, y, label, type)
+    cwnd = 1.0
+    ssthresh = 32.0 # Standard start
+    
+    can_annotate = True
+    
+    for t, p in enumerate(sim_preds):
+        cwnd_history.append(cwnd)
+        
+        if cwnd >= 6.0:
+            can_annotate = True
+            
+        if p == 0:  # CLEAR: Grow window
+            if cwnd < ssthresh:
+                # Slow Start -> cwnd = cwnd * 2
+                cwnd = min(cwnd * 2, ssthresh) if cwnd * 2 <= ssthresh else cwnd + 1 
+            else:
+                # Congestion Avoidance -> cwnd = cwnd + 1
+                cwnd += 1  
+        elif p == 1:  # MEDIUM TRAFFIC: 3 Duplicate ACKs
+            ssthresh = max(2.0, cwnd // 2)
+            if can_annotate and cwnd >= 4.0:
+                events.append((t, cwnd_history[-1], f"3 Ack SS thresh = {int(ssthresh)}", '3ack'))
+                can_annotate = False
+            else:
+                events.append((t, cwnd_history[-1], "", 'quiet'))
+            cwnd = ssthresh
+        elif p == 2:  # HIGH CONGESTION: Timeout
+            ssthresh = max(2.0, cwnd // 2)
+            if can_annotate and cwnd >= 4.0:
+                events.append((t, cwnd_history[-1], f"Time Out SSthresh = {int(ssthresh)}", 'timeout'))
+                can_annotate = False
+            else:
+                events.append((t, cwnd_history[-1], "", 'quiet'))
+            cwnd = 1.0
+            
+    fig_tcp, ax_tcp = plt.subplots(figsize=(10, 4))
+    fig_tcp.patch.set_facecolor('#0f172a')
+    ax_tcp.set_facecolor('#111827')
+    
+    x_vals = np.arange(len(cwnd_history))
+    ax_tcp.plot(x_vals, cwnd_history, color='#0ea5e9', linewidth=2.5, marker='o', markersize=5, markerfacecolor='#ef4444')
+    
+    for (x, y, label, ev_type) in events:
+        ax_tcp.plot(x, y, marker='o', color='#ef4444', markersize=8)
+        
+        if label != "":
+            y_offset = -6 if ev_type == '3ack' else 6
+            x_offset = 1 if ev_type == 'timeout' else 0.5
+            ax_tcp.annotate(label, (x, y), xytext=(x+x_offset, y+y_offset), color='#e0e6f0', fontsize=10, fontweight='bold')
+            
+            ax_tcp.vlines(x, ymin=0, ymax=y, colors='#94a3b8', linestyles='dotted', alpha=0.9, linewidth=1.5)
+            ax_tcp.hlines(y, xmin=0, xmax=x, colors='#94a3b8', linestyles='dotted', alpha=0.9, linewidth=1.5)
+        
+    ax_tcp.set_xlabel("Transmission Round", color='#94a3b8', fontsize=11, fontweight='bold')
+    ax_tcp.set_ylabel("Congestion Window Size", color='#94a3b8', fontsize=11, fontweight='bold')
+    
+    y_max_bound = max(cwnd_history)
+    y_max_bound = y_max_bound + 15 if y_max_bound > 0 else 40
+    ax_tcp.set_ylim(0, y_max_bound)
+    ax_tcp.set_xlim(0, len(cwnd_history))
+    
+    ax_tcp.set_xticks(np.arange(0, len(cwnd_history)+1, 2))
+    ax_tcp.tick_params(colors='#e0e6f0', labelsize=10)
+    ax_tcp.spines['bottom'].set_color('#1e293b')
+    ax_tcp.spines['left'].set_color('#1e293b')
+    ax_tcp.spines['top'].set_visible(False)
+    ax_tcp.spines['right'].set_visible(False)
+    ax_tcp.grid(color='#1e293b', linestyle='-', linewidth=0.3, alpha=0.5)
+    
+    st.pyplot(fig_tcp, use_container_width=True)
+    plt.close()
+
+    st.markdown('<br><div class="section-header">Traffic Overview</div>', unsafe_allow_html=True)
+    
     # ── Row 1: Pie + Bar ──
     col1, col2 = st.columns(2)
 
