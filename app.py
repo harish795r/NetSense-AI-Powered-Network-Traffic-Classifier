@@ -119,9 +119,10 @@ div[data-testid="stFileUploadDropzone"] {
     font-weight: 700;
     border: none;
     border-radius: 8px;
-    padding: 0.6rem 2rem;
+    padding: 0.6rem 1rem;
     font-size: 0.9rem;
     letter-spacing: 0.5px;
+    white-space: nowrap;
     transition: all 0.2s;
 }
 
@@ -144,6 +145,108 @@ div[data-testid="stDataFrame"] {
     background: rgba(15,23,42,0.8);
     border-radius: 10px;
 }
+
+/* ── LEARN MODAL STYLES ── */
+.learn-section {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(56,189,248,0.15);
+    border-radius: 12px;
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 1.2rem;
+}
+.learn-section h3 {
+    color: #38bdf8 !important;
+    font-family: 'Space Mono', monospace !important;
+    font-size: 1.05rem !important;
+    margin-top: 0 !important;
+    margin-bottom: 0.7rem !important;
+    letter-spacing: 0.5px;
+}
+.learn-section h4 {
+    color: #7dd3fc !important;
+    font-size: 0.92rem !important;
+    margin-top: 1rem !important;
+    margin-bottom: 0.3rem !important;
+}
+.learn-section p, .learn-section li {
+    color: #94a3b8;
+    font-size: 0.88rem;
+    line-height: 1.7;
+}
+.learn-section strong { color: #e0e6f0; }
+.learn-section code {
+    background: rgba(56,189,248,0.1);
+    color: #38bdf8;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.82rem;
+}
+.concept-pill {
+    display: inline-block;
+    background: rgba(56,189,248,0.12);
+    border: 1px solid rgba(56,189,248,0.3);
+    color: #38bdf8;
+    border-radius: 20px;
+    padding: 2px 12px;
+    font-size: 0.78rem;
+    font-family: 'Space Mono', monospace;
+    margin: 2px 3px;
+}
+.phase-box {
+    background: rgba(30,41,59,0.6);
+    border-left: 3px solid #38bdf8;
+    border-radius: 0 8px 8px 0;
+    padding: 0.7rem 1rem;
+    margin: 0.5rem 0;
+}
+.phase-box.green  { border-left-color: #34d399; }
+.phase-box.yellow { border-left-color: #fbbf24; }
+.phase-box.red    { border-left-color: #f87171; }
+.phase-box.purple { border-left-color: #a78bfa; }
+.phase-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 3px;
+}
+.phase-box.green  .phase-label { color: #34d399; }
+.phase-box.yellow .phase-label { color: #fbbf24; }
+.phase-box.red    .phase-label { color: #f87171; }
+.phase-box.purple .phase-label { color: #a78bfa; }
+.ascii-art {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: #64748b;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre;
+}
+.step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    background: #38bdf8;
+    color: #0b0f1a;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+.step-row {
+    display: flex;
+    align-items: flex-start;
+    margin: 0.5rem 0;
+    color: #94a3b8;
+    font-size: 0.87rem;
+    line-height: 1.6;
+}
+.learn-divider { border-color: rgba(56,189,248,0.1); margin: 0.2rem 0 1rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -251,12 +354,460 @@ def parse_pcap(file):
     return pd.DataFrame(data)
 
 # ─────────────────────────────────────────
+# DIALOGS
+# ─────────────────────────────────────────
+import base64
+import os
+
+def get_img_src(filepath):
+    if os.path.exists(filepath):
+        with open(filepath, "rb") as f:
+             data = base64.b64encode(f.read()).decode("utf-8")
+        ext = filepath.split('.')[-1]
+        return f"data:image/{ext};base64,{data}"
+    return "https://via.placeholder.com/150?text=No+Image"
+
+@st.dialog("👥 Developed by", width="large")
+def modal_developed_by():
+    st.html(f"""
+    <div style="text-align:center;">
+      <h2 style="margin-bottom:10px; color:#e0e6f0; font-family:'Space Mono', monospace;">Developed by</h2>
+      <div style="display:flex;gap:30px;flex-wrap:wrap;justify-content:center;">
+        <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:15px; width:180px; transition:all 0.3s ease;">
+          <img src="{get_img_src('kanika.jpg')}" alt="Kanika Rathore" style="width:150px;height:150px;border-radius:50%;object-fit:cover;border:2px solid #38bdf8;">
+          <p style="margin-top:8px;font-size:14px;color:#e0e6f0">
+            <strong>Kanika Rathore</strong><br>
+            <span style="color:#94a3b8;">24BYB1080</span>
+          </p>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:15px; width:180px; transition:all 0.3s ease;">
+          <img src="{get_img_src('harish.jpg')}" alt="R Harish" style="width:150px;height:150px;border-radius:50%;object-fit:cover;border:2px solid #38bdf8;">
+          <p style="margin-top:8px;font-size:14px;color:#e0e6f0">
+            <strong>R Harish</strong><br>
+            <span style="color:#94a3b8;">24BYB1159</span>
+          </p>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:15px; width:180px; transition:all 0.3s ease;">
+          <img src="{get_img_src('akshaya.jpg')}" alt="Akshaya H" style="width:150px;height:150px;border-radius:50%;object-fit:cover;border:2px solid #38bdf8;">
+          <p style="margin-top:8px;font-size:14px;color:#e0e6f0">
+            <strong>Akshaya H</strong><br>
+            <span style="color:#94a3b8;">24BYB1124</span>
+          </p>
+        </div>
+      </div>
+      <hr style="margin:25px 0;border-color:rgba(255,255,255,0.1)">
+      <h2 style="margin-bottom:10px; color:#e0e6f0; font-family:'Space Mono', monospace;">Guided by</h2>
+      <div style="display:flex;justify-content:center;">
+        <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:15px; width:200px; transition:all 0.3s ease;">
+          <img src="{get_img_src('proff.jpg')}" alt="Swaminathan A" style="width:160px;height:160px;border-radius:50%;object-fit:cover;border:2px solid #10b981;">
+          <p style="margin-top:8px;font-size:14px;color:#e0e6f0">
+            <strong>Dr. Swaminathan A</strong><br>
+            <span style="color:#94a3b8;">Faculty, Computer Networks</span>
+          </p>
+        </div>
+      </div>
+    </div>
+    """)
+
+@st.dialog("📚 Learn — Network Traffic & TCP Congestion Control", width="large")
+def modal_learn():
+    st.html("""
+    <div style="color:#e0e6f0; max-width:100%;">
+
+    <!-- ── INTRO ── -->
+    <div class="learn-section">
+        <h3>👋 Welcome — What is NetSense?</h3>
+        <p>
+            <strong>NetSense</strong> is an AI-powered network monitoring tool that watches the data flowing through
+            your computer in real time, decides whether the network is congested or clear, and then
+            <em>simulates</em> how TCP — the protocol that carries most of the internet — would respond to that congestion.
+        </p>
+        <p>
+            Don't worry if those words mean nothing yet. This page explains everything from scratch —
+            starting with <em>"what is a network packet?"</em> all the way to <em>"how does an AI learn to detect congestion?"</em>
+        </p>
+        <div style="margin-top:0.8rem;">
+            <span class="concept-pill">Computer Networks</span>
+            <span class="concept-pill">TCP Protocol</span>
+            <span class="concept-pill">Congestion Control</span>
+            <span class="concept-pill">RNN / LSTM</span>
+            <span class="concept-pill">Real-Time AI</span>
+        </div>
+    </div>
+
+    <!-- ── CHAPTER 1: NETWORKS ── -->
+    <div class="learn-section">
+        <h3>📡 Chapter 1 — How Data Travels Over a Network</h3>
+
+        <h4>What is a Packet?</h4>
+        <p>
+            When you send a message or load a webpage, your computer does NOT send all the data in one giant chunk.
+            It breaks the data into small pieces called <strong>packets</strong>. Each packet is like a labelled
+            envelope — it contains a tiny chunk of your data plus information like <em>where it came from</em>,
+            <em>where it's going</em>, and <em>how big it is</em>.
+        </p>
+        <div class="ascii-art">┌─────────────────────────────────────────┐
+│  PACKET                                 │
+│  ┌──────────┬──────────┬─────────────┐  │
+│  │  Source  │  Dest.   │   Payload   │  │
+│  │  IP Addr │  IP Addr │  (your data)│  │
+│  └──────────┴──────────┴─────────────┘  │
+│  Length: 512 bytes   Protocol: TCP      │
+└─────────────────────────────────────────┘</div>
+
+        <h4>What is a Protocol?</h4>
+        <p>
+            A <strong>protocol</strong> is just a set of rules that both sides agree to follow. The two most
+            important protocols for most internet traffic are:
+        </p>
+        <ul>
+            <li><strong>TCP (Transmission Control Protocol)</strong> — Reliable delivery. It checks that every
+                packet arrives, and resends any that get lost. Used by web browsing, email, file downloads.</li>
+            <li><strong>UDP (User Datagram Protocol)</strong> — Fast but no guarantee. Used where speed matters
+                more than perfection — like video calls or online gaming.</li>
+        </ul>
+        <p>NetSense monitors both, but focuses on TCP because TCP is where <em>congestion control</em> happens.</p>
+
+        <h4>What is Network Congestion?</h4>
+        <p>
+            Imagine a highway. During rush hour, too many cars enter and traffic jams form — cars slow down or stop.
+            A network works the same way. When too many packets are sent at once, <strong>routers</strong>
+            (the traffic directors of the internet) get overwhelmed, <strong>buffers overflow</strong>, and
+            packets get <strong>dropped</strong> (lost). This is called <strong>congestion</strong>.
+        </p>
+        <div class="ascii-art">Normal:   [P]→[P]→[P]→→→[Router]→→→[Destination]  ✅
+
+Congested: [P][P][P][P][P][P][P]→→[Router🔥]→ packet DROPPED ❌
+                                    buffer full!</div>
+    </div>
+
+    <!-- ── CHAPTER 2: TCP CONGESTION CONTROL ── -->
+    <div class="learn-section">
+        <h3>🔧 Chapter 2 — TCP Congestion Control (The Core Theory)</h3>
+        <p>
+            TCP has a built-in system to detect congestion and slow itself down <em>before</em> things get
+            completely jammed. The key variable is called the <strong>Congestion Window (cwnd)</strong>.
+        </p>
+
+        <h4>What is the Congestion Window (cwnd)?</h4>
+        <p>
+            <code>cwnd</code> controls <em>how many packets TCP is allowed to have "in flight" at once</em>
+            (sent but not yet acknowledged). A large <code>cwnd</code> = sending data fast.
+            A small <code>cwnd</code> = sending slowly, carefully.
+        </p>
+        <div class="ascii-art">cwnd = 1  →  [P] in flight         (very slow, safe)
+cwnd = 8  →  [P][P][P][P][P][P][P][P] in flight  (fast)
+cwnd = 32 →  [P]×32 in flight        (very fast — risky if network is full)</div>
+
+        <h4>The AIMD Rule — Additive Increase, Multiplicative Decrease</h4>
+        <p>
+            TCP follows the <strong>AIMD</strong> strategy to grow its window fairly and shrink it when problems arise:
+        </p>
+        <div class="phase-box green">
+            <div class="phase-label">ADDITIVE INCREASE ↗</div>
+            <div style="font-size:0.85rem;color:#94a3b8;">When things are going well (ACKs arriving), increase cwnd by +1 each round. Grow slowly and steadily.</div>
+        </div>
+        <div class="phase-box red">
+            <div class="phase-label">MULTIPLICATIVE DECREASE ↘↘</div>
+            <div style="font-size:0.85rem;color:#94a3b8;">When congestion is detected, cut cwnd aggressively — either halve it (3 duplicate ACKs) or reset to 1 (timeout). React fast to give the network relief.</div>
+        </div>
+
+        <hr class="learn-divider">
+
+        <h4>📈 Phase 1 — Slow Start</h4>
+        <p>
+            When a TCP connection <em>first begins</em>, it knows nothing about how much capacity the network has.
+            It starts cautiously with <code>cwnd = 1</code> and <strong>doubles</strong> the window every round
+            until it hits a threshold (called <code>ssthresh</code>). Despite the name, this phase grows
+            <em>exponentially fast</em>.
+        </p>
+        <div class="ascii-art">Round 1: cwnd = 1
+Round 2: cwnd = 2   (doubled)
+Round 3: cwnd = 4   (doubled)
+Round 4: cwnd = 8   (doubled)
+...until cwnd reaches ssthresh → switch to Congestion Avoidance</div>
+
+        <h4>📉 Phase 2 — Congestion Avoidance</h4>
+        <p>
+            Once <code>cwnd ≥ ssthresh</code>, TCP slows its growth to <strong>+1 per round</strong>
+            (linear growth, not exponential). This is the steady cruising phase — probing for more bandwidth
+            carefully.
+        </p>
+
+        <h4>⚠️ Phase 3 — Fast Retransmit (3 Duplicate ACKs)</h4>
+        <p>
+            When the receiver gets packets <em>out of order</em>, it keeps sending the same ACK (acknowledgement)
+            for the last packet it received correctly. If the sender receives <strong>3 duplicate ACKs</strong>,
+            it knows a specific packet was lost — but the network is still working. So it reacts moderately:
+        </p>
+        <div class="phase-box yellow">
+            <div class="phase-label">3 DUPLICATE ACKs DETECTED</div>
+            <div style="font-size:0.85rem;color:#94a3b8;">
+                ssthresh = cwnd / 2 &nbsp;|&nbsp; cwnd = ssthresh &nbsp;(halved, NOT reset to 1)<br>
+                → Resume from Congestion Avoidance. Less drastic than a full timeout.
+            </div>
+        </div>
+
+        <h4>🛑 Phase 4 — Timeout (Full Congestion)</h4>
+        <p>
+            If the sender waits too long and <em>no ACK arrives at all</em>, it means packets were completely
+            lost — the network is severely congested. TCP reacts harshly:
+        </p>
+        <div class="phase-box red">
+            <div class="phase-label">TIMEOUT DETECTED</div>
+            <div style="font-size:0.85rem;color:#94a3b8;">
+                ssthresh = cwnd / 2 &nbsp;|&nbsp; cwnd = 1 &nbsp;(full reset!)<br>
+                → Restart from Slow Start. Severe punishment because the network needs maximum relief.
+            </div>
+        </div>
+
+        <h4>How NetSense Maps This</h4>
+        <p>The LSTM classifies every 10-packet window into one of three states, and the AIMD simulation responds:</p>
+        <div class="phase-box green">
+            <div class="phase-label">🔵 LOW TRAFFIC (Class 0)</div>
+            <div style="font-size:0.85rem;color:#94a3b8;">Network clear → run Slow Start or Congestion Avoidance → cwnd grows.</div>
+        </div>
+        <div class="phase-box yellow">
+            <div class="phase-label">🟡 MEDIUM TRAFFIC (Class 1)</div>
+            <div style="font-size:0.85rem;color:#94a3b8;">Mild congestion detected → simulate 3 Duplicate ACKs → ssthresh = cwnd/2, cwnd = ssthresh.</div>
+        </div>
+        <div class="phase-box red">
+            <div class="phase-label">🔴 HIGH CONGESTION (Class 2)</div>
+            <div style="font-size:0.85rem;color:#94a3b8;">Severe congestion detected → simulate Timeout → ssthresh = cwnd/2, cwnd = 1 (full reset!).</div>
+        </div>
+    </div>
+
+    <!-- ── CHAPTER 3: RNN & LSTM ── -->
+    <div class="learn-section">
+        <h3>🧠 Chapter 3 — Recurrent Neural Networks & LSTM</h3>
+
+        <h4>Why Normal Neural Networks Are Not Enough</h4>
+        <p>
+            A regular neural network (like a feedforward network) looks at <em>one snapshot</em> and makes a
+            decision. But network traffic is a <strong>sequence</strong> — what happened in the last 10 packets
+            <em>matters</em> for predicting what's happening now. You can't understand congestion from one
+            packet alone, just like you can't understand a sentence from one word alone.
+        </p>
+
+        <h4>What is an RNN (Recurrent Neural Network)?</h4>
+        <p>
+            An <strong>RNN</strong> has a <em>memory</em>. At each time step, it takes the current input
+            AND a hidden state carried over from the previous step. This lets it understand sequences.
+        </p>
+        <div class="ascii-art">Time step:  t=1        t=2        t=3        t=4
+Input:   [packet1]  [packet2]  [packet3]  [packet4]
+              ↓          ↓          ↓          ↓
+RNN:    [hidden1]→ [hidden2]→ [hidden3]→ [hidden4] → OUTPUT (Low/Med/High)
+         memory      memory      memory      memory</div>
+        <p>
+            The arrows show the hidden state being passed forward — the RNN <em>remembers</em> earlier packets
+            when making its decision at each step.
+        </p>
+
+        <h4>The Problem with Plain RNNs — Vanishing Gradients</h4>
+        <p>
+            Plain RNNs struggle to remember things from <em>many steps ago</em>. During training, the signal
+            used to teach the network (the <em>gradient</em>) keeps getting multiplied by small numbers as it
+            travels back through time, eventually becoming so tiny it effectively disappears.
+            This is called the <strong>vanishing gradient problem</strong>.
+        </p>
+
+        <h4>What is LSTM (Long Short-Term Memory)?</h4>
+        <p>
+            <strong>LSTM</strong> solves the vanishing gradient problem with a clever <em>gating mechanism</em>.
+            Each LSTM cell has three gates that control what to remember and what to forget:
+        </p>
+        <div class="phase-box green">
+            <div class="phase-label">🟢 INPUT GATE</div>
+            <div style="font-size:0.85rem;color:#94a3b8;">Decides what new information from the current packet to write into memory.</div>
+        </div>
+        <div class="phase-box purple">
+            <div class="phase-label">🟣 FORGET GATE</div>
+            <div style="font-size:0.85rem;color:#94a3b8;">Decides what old information to erase from memory. (e.g., "the burst from 8 packets ago is no longer relevant")</div>
+        </div>
+        <div class="phase-box yellow">
+            <div class="phase-label">🟡 OUTPUT GATE</div>
+            <div style="font-size:0.85rem;color:#94a3b8;">Decides what part of memory to use for the current prediction.</div>
+        </div>
+        <div class="ascii-art">       ┌────────────────────────────────────┐
+       │  LSTM Cell                         │
+       │                                    │
+  h(t-1) →┤ Forget Gate → erase old memory  │
+  x(t)  →┤ Input  Gate → write new memory  │→ h(t) → next cell
+          │ Output Gate → read for output   │
+          │             ↓                   │
+          └─────────── ŷ(t) ───────────────┘
+                 (Low / Medium / High)</div>
+
+        <h4>NetSense's LSTM Architecture</h4>
+        <p>NetSense uses a <strong>2-layer stacked LSTM</strong> built with PyTorch:</p>
+        <div class="phase-box" style="border-left-color:#38bdf8;">
+            <div class="phase-label" style="color:#38bdf8;">LAYER 1 — LSTM (hidden size: 64)</div>
+            <div style="font-size:0.85rem;color:#94a3b8;">Takes the 10-packet sequence (5 features each) and learns low-level temporal patterns — like "packet size is growing rapidly".</div>
+        </div>
+        <div class="phase-box" style="border-left-color:#818cf8;">
+            <div class="phase-label" style="color:#818cf8;">DROPOUT (30%) — Regularisation</div>
+            <div style="font-size:0.85rem;color:#94a3b8;">Randomly disables 30% of neurons during training so the network can't memorise training data. Forces it to generalise.</div>
+        </div>
+        <div class="phase-box" style="border-left-color:#38bdf8;">
+            <div class="phase-label" style="color:#38bdf8;">LAYER 2 — LSTM (hidden size: 32)</div>
+            <div style="font-size:0.85rem;color:#94a3b8;">Takes the output of Layer 1 and learns higher-level patterns — like "this is a sustained burst consistent with high congestion".</div>
+        </div>
+        <div class="phase-box" style="border-left-color:#34d399;">
+            <div class="phase-label" style="color:#34d399;">FULLY CONNECTED LAYERS → Softmax</div>
+            <div style="font-size:0.85rem;color:#94a3b8;">32 → 3 neurons. Outputs a probability for each class: P(Low), P(Medium), P(High). The highest one wins.</div>
+        </div>
+    </div>
+
+    <!-- ── CHAPTER 4: FEATURES ── -->
+    <div class="learn-section">
+        <h3>⚙️ Chapter 4 — What the AI Actually Looks At</h3>
+        <p>
+            For each packet, NetSense extracts <strong>5 numerical features</strong>. These 5 numbers,
+            collected across 10 consecutive packets, form one input sequence to the LSTM.
+        </p>
+        <table style="width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:0.5rem;">
+            <thead>
+                <tr style="border-bottom:1px solid rgba(56,189,248,0.2);">
+                    <th style="color:#38bdf8; text-align:left; padding:6px 8px; font-family:'Space Mono',monospace; font-size:0.78rem;">Feature</th>
+                    <th style="color:#38bdf8; text-align:left; padding:6px 8px; font-family:'Space Mono',monospace; font-size:0.78rem;">What it Measures</th>
+                    <th style="color:#38bdf8; text-align:left; padding:6px 8px; font-family:'Space Mono',monospace; font-size:0.78rem;">Why it Matters</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <td style="color:#7dd3fc; padding:6px 8px; font-family:'Space Mono',monospace;"><code>packet_count</code></td>
+                    <td style="color:#94a3b8; padding:6px 8px;">Number of packets seen</td>
+                    <td style="color:#94a3b8; padding:6px 8px;">High counts suggest burst activity</td>
+                </tr>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <td style="color:#7dd3fc; padding:6px 8px; font-family:'Space Mono',monospace;"><code>avg_size</code></td>
+                    <td style="color:#94a3b8; padding:6px 8px;">Average packet length (bytes)</td>
+                    <td style="color:#94a3b8; padding:6px 8px;">Large packets = bulk transfers; small = control traffic</td>
+                </tr>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <td style="color:#7dd3fc; padding:6px 8px; font-family:'Space Mono',monospace;"><code>size_variation</code></td>
+                    <td style="color:#94a3b8; padding:6px 8px;">How much packet size changes between consecutive packets</td>
+                    <td style="color:#94a3b8; padding:6px 8px;">High variation = mixed traffic types (e.g., streaming + ACKs)</td>
+                </tr>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <td style="color:#7dd3fc; padding:6px 8px; font-family:'Space Mono',monospace;"><code>packet_rate</code></td>
+                    <td style="color:#94a3b8; padding:6px 8px;">Rolling sum of bytes (intensity over last 2 packets)</td>
+                    <td style="color:#94a3b8; padding:6px 8px;">High rate = heavy load on the network link</td>
+                </tr>
+                <tr>
+                    <td style="color:#7dd3fc; padding:6px 8px; font-family:'Space Mono',monospace;"><code>rate_change</code></td>
+                    <td style="color:#94a3b8; padding:6px 8px;">How much the packet rate changes step to step</td>
+                    <td style="color:#94a3b8; padding:6px 8px;">Sudden spikes in rate_change signal the start of congestion</td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="margin-top:0.8rem;">
+            Before being fed to the LSTM, all 5 features are <strong>normalised to the [0, 1] range</strong>
+            using <code>MinMaxScaler</code>. This prevents one feature (like packet size in bytes) from
+            dominating over another (like packet count = 1) just because of scale differences.
+        </p>
+    </div>
+
+    <!-- ── CHAPTER 5: END-TO-END FLOW ── -->
+    <div class="learn-section">
+        <h3>🔄 Chapter 5 — How NetSense Works End-to-End</h3>
+        <div class="step-row"><span class="step-num">1</span><div><strong style="color:#e0e6f0;">Packet Capture</strong> — Scapy listens on your network interface on a background thread, intercepting every TCP/UDP packet in real time (or you upload a <code>.pcap</code> file recorded earlier).</div></div>
+        <div class="step-row"><span class="step-num">2</span><div><strong style="color:#e0e6f0;">Feature Extraction</strong> — Each raw packet is parsed: timestamp, length, protocol. Then the 5 derived features are computed per packet.</div></div>
+        <div class="step-row"><span class="step-num">3</span><div><strong style="color:#e0e6f0;">Sequence Creation</strong> — Packets are grouped into overlapping windows of 10. Window 1 = packets 1–10, Window 2 = packets 2–11, etc. Each window = one LSTM input.</div></div>
+        <div class="step-row"><span class="step-num">4</span><div><strong style="color:#e0e6f0;">Normalisation</strong> — Features in each window are scaled to [0,1] so the LSTM receives consistent input magnitudes.</div></div>
+        <div class="step-row"><span class="step-num">5</span><div><strong style="color:#e0e6f0;">LSTM Inference</strong> — The trained PyTorch model processes the window through 2 LSTM layers + fully connected layers and outputs three probabilities: P(Low), P(Medium), P(High).</div></div>
+        <div class="step-row"><span class="step-num">6</span><div><strong style="color:#e0e6f0;">Classification</strong> — The class with the highest probability wins: <span style="color:#60a5fa;">Low</span> / <span style="color:#34d399;">Medium</span> / <span style="color:#f87171;">High</span>.</div></div>
+        <div class="step-row"><span class="step-num">7</span><div><strong style="color:#e0e6f0;">AIMD Simulation</strong> — Each prediction drives the TCP congestion window simulation: Low → grow cwnd, Medium → halve it (3 Dup ACKs), High → reset to 1 (Timeout). The graph in the Dashboard tab shows this live.</div></div>
+        <div class="step-row"><span class="step-num">8</span><div><strong style="color:#e0e6f0;">Visualisation</strong> — The Live Monitor tab shows the animated traffic pipe and real-time metrics. The Dashboard tab shows the AIMD graph, probability heatmap, class distribution pie, and packet length histogram.</div></div>
+        <div class="ascii-art">Network Interface / PCAP File
+        ↓
+  [Scapy Packet Capture]
+        ↓
+  [Feature Extraction: 5 features/packet]
+        ↓
+  [Sliding Window: groups of 10 packets]
+        ↓
+  [MinMaxScaler Normalisation]
+        ↓
+  [LSTM Layer 1 → Dropout → LSTM Layer 2]
+        ↓
+  [FC Layer → Softmax → Class: 0/1/2]
+        ↓
+  [AIMD Engine: update cwnd]    [Dashboard Charts]
+        ↓                              ↓
+  Live Traffic Pipe Display    AIMD Graph + Heatmaps</div>
+    </div>
+
+    <!-- ── CHAPTER 6: WHY AI ── -->
+    <div class="learn-section">
+        <h3>💡 Chapter 6 — Why Use AI Instead of Simple Rules?</h3>
+        <p>
+            A naive approach to congestion detection might be: <em>"if more than 1000 packets per second → congested."</em>
+            But this breaks on a fast fibre link (1000 pps is normal) and misses subtle patterns on slow links.
+        </p>
+        <p>
+            The LSTM learns <strong>from data</strong> — it discovers which combinations of packet size, rate,
+            and variation actually predict congestion on your specific network, without you having to hand-tune thresholds.
+            It can detect <em>multi-feature patterns</em> across time that simple rules completely miss —
+            like "small packets, rapidly varying size, low rate = probably ACK storm, not congestion."
+        </p>
+        <p>
+            This is the core advantage of machine learning for network analysis: <strong>adaptability to context</strong>.
+        </p>
+    </div>
+
+    <div style="text-align:center; padding:1rem 0 0.5rem; color:#64748b; font-family:'Space Mono',monospace; font-size:0.75rem;">
+        NetSense · Built with PyTorch, Streamlit & Scapy · Computer Networks Project
+    </div>
+    </div>
+    """)
+
+@st.dialog("❓ Help — How We Developed This App", width="large")
+def modal_help():
+    st.html("""
+    <div style="color: #e0e6f0;">
+    <h3>🧩 Steps Followed in Development</h3>
+    <ol style="margin-top:5px; color:#94a3b8;">
+      <li><strong>Data Engineering & Deep Learning:</strong> Processed raw PCAP traffic sequences and trained a multi-class <strong>PyTorch LSTM</strong> model (<code>train.py</code>) on them, then exported the model weights.</li>
+      <li><strong>Background Sniffing Pipeline:</strong> Integrated <code>scapy.all.sniff()</code> on an independent daemon thread, depositing extracted payloads into a thread-safe deque buffer.</li>
+      <li><strong>Real-time Dashboard:</strong> Leveraged Streamlit's redraw architecture, rendering sliding HTML/CSS animations of TCP AIMD Congestion Windows on the fly.</li>
+      <li><strong>UI Refinement:</strong> Implemented Custom Glassmorphism CSS styling to fit modern hacker/cyber themes using glowing effects.</li>
+    </ol>
+    
+    <hr style="border-color:rgba(255,255,255,0.1)">
+
+    <h3>🧰 Tools and Technologies Used</h3>
+    <ul style="margin-top:5px; color:#94a3b8;">
+      <li><strong>Python & Streamlit</strong> — Web application framework</li>
+      <li><strong>PyTorch</strong> — Neural Network development environment</li>
+      <li><strong>Scapy</strong> — Core backend network analysis and socket library</li>
+      <li><strong>Pandas & Scikit-Learn</strong> — Vector scaling and manipulation</li>
+    </ul>
+    </div>
+    """)
+
+# ─────────────────────────────────────────
 # HEADER
 # ─────────────────────────────────────────
-col_logo, col_title = st.columns([1, 6])
+col_logo, col_title, col_opts = st.columns([0.5, 4.5, 4.5])
+
 with col_title:
     st.markdown('<div class="hero-title">🌐 NetSense</div>', unsafe_allow_html=True)
     st.markdown('<div class="hero-sub">LSTM-powered Network Traffic Classifier · TCP/UDP Analysis</div>', unsafe_allow_html=True)
+
+with col_opts:
+    st.markdown("<br>", unsafe_allow_html=True)
+    b_learn, b_dev, b_help = st.columns([1, 1.5, 1])
+    with b_learn:
+        if st.button("📚 Learn", use_container_width=True):
+            modal_learn()
+    with b_dev:
+        if st.button("👥 Developed by", use_container_width=True):
+            modal_developed_by()
+    with b_help:
+        if st.button("❓ Help", use_container_width=True):
+            modal_help()
 
 st.markdown("<br>", unsafe_allow_html=True)
 
