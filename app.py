@@ -247,6 +247,119 @@ div[data-testid="stDataFrame"] {
     line-height: 1.6;
 }
 .learn-divider { border-color: rgba(56,189,248,0.1); margin: 0.2rem 0 1rem; }
+
+/* ── HELP MODAL STYLES ── */
+.help-step-card {
+    display: flex;
+    gap: 1rem;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(56,189,248,0.12);
+    border-radius: 12px;
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 0.8rem;
+    align-items: flex-start;
+}
+.help-step-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+    color: #0b0f1a;
+    border-radius: 50%;
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.help-step-body { flex: 1; }
+.help-step-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #e0e6f0;
+    margin-bottom: 0.35rem;
+}
+.help-step-desc {
+    font-size: 0.84rem;
+    color: #94a3b8;
+    line-height: 1.65;
+}
+.help-step-desc strong { color: #cbd5e1; }
+.help-step-desc code {
+    background: rgba(56,189,248,0.1);
+    color: #38bdf8;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-family: 'Space Mono', monospace;
+}
+.help-tip {
+    background: rgba(14,165,233,0.07);
+    border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    margin: 0.5rem 0;
+    font-size: 0.82rem;
+    color: #94a3b8;
+    line-height: 1.6;
+}
+.help-tip strong { color: #38bdf8; }
+.help-warn {
+    background: rgba(251,191,36,0.07);
+    border: 1px solid rgba(251,191,36,0.25);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    margin: 0.5rem 0;
+    font-size: 0.82rem;
+    color: #94a3b8;
+    line-height: 1.6;
+}
+.help-warn strong { color: #fbbf24; }
+.help-section-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #38bdf8;
+    border-bottom: 1px solid rgba(56,189,248,0.15);
+    padding-bottom: 0.45rem;
+    margin: 1.2rem 0 0.8rem;
+    letter-spacing: 0.4px;
+}
+.help-badge {
+    display: inline-block;
+    border-radius: 6px;
+    padding: 2px 10px;
+    font-size: 0.76rem;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+.help-badge.blue   { background:#1e3a5f; color:#60a5fa; }
+.help-badge.green  { background:#1a3d2b; color:#34d399; }
+.help-badge.red    { background:#3d1a1a; color:#f87171; }
+.help-badge.yellow { background:#3d2f0a; color:#fbbf24; }
+.help-faq {
+    background: rgba(30,41,59,0.5);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    margin: 0.5rem 0;
+}
+.help-faq-q {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #7dd3fc;
+    margin-bottom: 0.3rem;
+}
+.help-faq-a {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    line-height: 1.6;
+}
+.help-faq-a strong { color: #cbd5e1; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -763,27 +876,235 @@ RNN:    [hidden1]→ [hidden2]→ [hidden3]→ [hidden4] → OUTPUT (Low/Med/Hig
     </div>
     """)
 
-@st.dialog("❓ Help — How We Developed This App", width="large")
+@st.dialog("❓ Help — How to Use NetSense", width="large")
 def modal_help():
     st.html("""
-    <div style="color: #e0e6f0;">
-    <h3>🧩 Steps Followed in Development</h3>
-    <ol style="margin-top:5px; color:#94a3b8;">
-      <li><strong>Data Engineering & Deep Learning:</strong> Processed raw PCAP traffic sequences and trained a multi-class <strong>PyTorch LSTM</strong> model (<code>train.py</code>) on them, then exported the model weights.</li>
-      <li><strong>Background Sniffing Pipeline:</strong> Integrated <code>scapy.all.sniff()</code> on an independent daemon thread, depositing extracted payloads into a thread-safe deque buffer.</li>
-      <li><strong>Real-time Dashboard:</strong> Leveraged Streamlit's redraw architecture, rendering sliding HTML/CSS animations of TCP AIMD Congestion Windows on the fly.</li>
-      <li><strong>UI Refinement:</strong> Implemented Custom Glassmorphism CSS styling to fit modern hacker/cyber themes using glowing effects.</li>
-    </ol>
-    
-    <hr style="border-color:rgba(255,255,255,0.1)">
+    <div style="color:#e0e6f0; max-width:100%; font-family:'Inter',sans-serif;">
 
-    <h3>🧰 Tools and Technologies Used</h3>
-    <ul style="margin-top:5px; color:#94a3b8;">
-      <li><strong>Python & Streamlit</strong> — Web application framework</li>
-      <li><strong>PyTorch</strong> — Neural Network development environment</li>
-      <li><strong>Scapy</strong> — Core backend network analysis and socket library</li>
-      <li><strong>Pandas & Scikit-Learn</strong> — Vector scaling and manipulation</li>
-    </ul>
+    <!-- INTRO -->
+    <div style="background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.2); border-radius:12px; padding:1rem 1.3rem; margin-bottom:1.2rem;">
+        <div style="font-family:'Space Mono',monospace; font-size:0.95rem; color:#38bdf8; font-weight:700; margin-bottom:0.4rem;">👋 Quick Start Guide</div>
+        <div style="font-size:0.85rem; color:#94a3b8; line-height:1.65;">
+            NetSense has two ways to analyse network traffic — <strong style="color:#e0e6f0;">Live Capture</strong> (watch your real network right now)
+            and <strong style="color:#e0e6f0;">Upload a PCAP file</strong> (analyse a saved recording). Pick whichever suits you below.
+        </div>
+    </div>
+
+    <!-- ══ PATH A: LIVE CAPTURE ══ -->
+    <div class="help-section-title">🔴 Path A — Live Network Capture</div>
+    <div style="font-size:0.82rem; color:#64748b; margin-bottom:0.8rem; font-style:italic;">Use this to monitor your actual network traffic in real time.</div>
+
+    <div class="help-step-card">
+        <div class="help-step-num">1</div>
+        <div class="help-step-body">
+            <div class="help-step-title">Run the app with admin privileges</div>
+            <div class="help-step-desc">
+                Live packet capture requires root access. Open your terminal and run:<br><br>
+                <code>sudo streamlit run app.py</code><br><br>
+                Without <code>sudo</code>, Scapy cannot sniff packets and live capture will fail.
+            </div>
+        </div>
+    </div>
+
+    <div class="help-step-card">
+        <div class="help-step-num">2</div>
+        <div class="help-step-body">
+            <div class="help-step-title">Load the model in the Sidebar</div>
+            <div class="help-step-desc">
+                On the left sidebar, check that the <strong>Model Path</strong> field says
+                <code>tcp_udp_lstm_pytorch.pt</code> (or type the correct path to your <code>.pt</code> file).
+                This is the trained LSTM — without it, classification won't work.
+            </div>
+        </div>
+    </div>
+
+    <div class="help-step-card">
+        <div class="help-step-num">3</div>
+        <div class="help-step-body">
+            <div class="help-step-title">Go to the Live Monitoring tab</div>
+            <div class="help-step-desc">
+                Click the <strong>Live Monitoring</strong> tab at the top. In the dropdown, make sure
+                <strong>🔴 Live Capture</strong> is selected (not PCAP Upload).
+            </div>
+        </div>
+    </div>
+
+    <div class="help-step-card">
+        <div class="help-step-num">4</div>
+        <div class="help-step-body">
+            <div class="help-step-title">Click "Start Live Capture"</div>
+            <div class="help-step-desc">
+                Hit the <strong>▶ Start Live Capture</strong> button. NetSense will begin sniffing packets
+                on your network interface in the background. You'll see a spinner — wait a few seconds
+                while it collects at least 10 packets to form the first sequence.
+            </div>
+        </div>
+    </div>
+
+    <div class="help-step-card">
+        <div class="help-step-num">5</div>
+        <div class="help-step-body">
+            <div class="help-step-title">Watch the Live Monitor panel update</div>
+            <div class="help-step-desc">
+                Once enough packets are captured, you'll see:
+                <br>• The animated <strong>traffic pipe</strong> — colour shows congestion level
+                <br>• The <strong>status badge</strong> — ✅ LOW / ⚠️ MEDIUM / 🛑 HIGH
+                <br>• The <strong>Dynamic TCP Window Size</strong> (cwnd) — how wide the simulated TCP window is
+                <br>• <strong>Metric cards</strong> showing total sequences classified so far
+                <br>• The <strong>Last 5 Predictions</strong> table with raw probabilities
+                <br><br>The page auto-refreshes every 2.5 seconds — just leave it open.
+            </div>
+        </div>
+    </div>
+
+    <div class="help-step-card">
+        <div class="help-step-num">6</div>
+        <div class="help-step-body">
+            <div class="help-step-title">Switch to the Dashboard tab for detailed charts</div>
+            <div class="help-step-desc">
+                Click the <strong>Dashboard</strong> tab to see:
+                <br>• <strong>TCP AIMD Congestion Window graph</strong> — the sawtooth pattern showing cwnd growing and collapsing
+                <br>• <strong>Class Distribution pie chart</strong> — what % of traffic was Low / Medium / High
+                <br>• <strong>Smoothed Traffic Timeline</strong> — how congestion evolved over time
+                <br>• <strong>Probability Heatmap</strong> — the AI's confidence for each class across sequences
+                <br>• <strong>Packet Length Distribution</strong> histogram
+            </div>
+        </div>
+    </div>
+
+    <div class="help-step-card">
+        <div class="help-step-num">7</div>
+        <div class="help-step-body">
+            <div class="help-step-title">Stop capturing when done</div>
+            <div class="help-step-desc">
+                Click <strong>⏹ Stop Capture</strong> to halt the background sniffing thread.
+                Your charts and predictions will remain visible — the dashboard won't clear until you start a new session.
+            </div>
+        </div>
+    </div>
+
+    <div class="help-warn">
+        <strong>⚠️ Important:</strong> Live capture only works if your machine has a network interface available
+        and Scapy is installed. If you see a Scapy error, install it with <code>pip install scapy</code>
+        and re-run with <code>sudo</code>.
+    </div>
+
+    <!-- ══ PATH B: PCAP UPLOAD ══ -->
+    <div class="help-section-title">📂 Path B — Upload a PCAP File</div>
+    <div style="font-size:0.82rem; color:#64748b; margin-bottom:0.8rem; font-style:italic;">Use this if you have a pre-recorded <code>.pcap</code> or <code>.pcapng</code> file (e.g. from Wireshark).</div>
+
+    <div class="help-step-card">
+        <div class="help-step-num">1</div>
+        <div class="help-step-body">
+            <div class="help-step-title">Go to the Live Monitoring tab</div>
+            <div class="help-step-desc">
+                Click the <strong>Live Monitoring</strong> tab. In the mode dropdown, select
+                <strong>📂 Upload PCAP File</strong>.
+            </div>
+        </div>
+    </div>
+
+    <div class="help-step-card">
+        <div class="help-step-num">2</div>
+        <div class="help-step-body">
+            <div class="help-step-title">Upload your PCAP file</div>
+            <div class="help-step-desc">
+                Click the file uploader and select your <code>.pcap</code> or <code>.pcapng</code> file.
+                NetSense will parse every packet in the file — no live internet needed.
+                <br><br>
+                <strong>Don't have a PCAP?</strong> Record one with Wireshark (free tool) — just start a capture,
+                browse the web for 30 seconds, stop it, and save as <code>.pcap</code>.
+            </div>
+        </div>
+    </div>
+
+    <div class="help-step-card">
+        <div class="help-step-num">3</div>
+        <div class="help-step-body">
+            <div class="help-step-title">Wait for processing</div>
+            <div class="help-step-desc">
+                NetSense will extract features from every packet, build sequences of 10, normalise them,
+                and run the LSTM on all sequences at once. You'll see a
+                <strong>✅ PCAP processed!</strong> confirmation when done.
+            </div>
+        </div>
+    </div>
+
+    <div class="help-step-card">
+        <div class="help-step-num">4</div>
+        <div class="help-step-body">
+            <div class="help-step-title">Go to the Dashboard tab</div>
+            <div class="help-step-desc">
+                Click the <strong>Dashboard</strong> tab — all charts will be populated with results from
+                your file. Everything is the same as live mode: AIMD graph, heatmap, pie chart, histogram.
+            </div>
+        </div>
+    </div>
+
+    <div class="help-tip">
+        <strong>💡 Tip:</strong> PCAP mode is great for demonstrations and presentations — you get consistent,
+        repeatable results every time without needing <code>sudo</code> or a live network.
+    </div>
+
+    <!-- ══ READING THE RESULTS ══ -->
+    <div class="help-section-title">📊 Understanding What You See</div>
+
+    <div style="margin-bottom:0.6rem;">
+        <div class="help-badge blue">LOW</div>
+        <span style="font-size:0.84rem; color:#94a3b8;">Network is clear. The LSTM detected low packet rate and small size variation.
+        TCP window grows steadily — Slow Start or Congestion Avoidance phase.</span>
+    </div>
+    <div style="margin-bottom:0.6rem;">
+        <div class="help-badge yellow">MEDIUM</div>
+        <span style="font-size:0.84rem; color:#94a3b8;">Mild congestion. The AI detected elevated traffic intensity.
+        Simulates 3 Duplicate ACKs — TCP window is halved (ssthresh = cwnd/2, cwnd = ssthresh).</span>
+    </div>
+    <div style="margin-bottom:1rem;">
+        <div class="help-badge red">HIGH</div>
+        <span style="font-size:0.84rem; color:#94a3b8;">Severe congestion. High packet rate with big rate changes detected.
+        Simulates a Timeout — TCP window resets to 1 (full restart from Slow Start).</span>
+    </div>
+
+    <div class="help-tip">
+        <strong>💡 AIMD Graph:</strong> The sawtooth pattern is <em>normal and expected</em>. TCP is designed to probe aggressively,
+        detect congestion, cut back, then probe again. A perfectly flat line would mean no congestion — and also no growth.
+    </div>
+
+    <!-- ══ SIDEBAR SETTINGS ══ -->
+    <div class="help-section-title">⚙️ Sidebar Settings Explained</div>
+
+    <div class="help-faq">
+        <div class="help-faq-q">Model Path (.pt)</div>
+        <div class="help-faq-a">Path to your trained PyTorch LSTM file. Default: <strong>tcp_udp_lstm_pytorch.pt</strong> in the same folder as app.py. Change this if your model file has a different name or is in a subfolder.</div>
+    </div>
+    <div class="help-faq">
+        <div class="help-faq-q">Sequence Timesteps (slider: 5–20)</div>
+        <div class="help-faq-a">How many consecutive packets form one input sequence to the LSTM. Default is <strong>10</strong>. Higher values = the model looks further back in time but needs more packets before making its first prediction. Keep at 10 unless you retrained the model with a different value.</div>
+    </div>
+
+    <!-- ══ FAQ ══ -->
+    <div class="help-section-title">❓ Common Questions</div>
+
+    <div class="help-faq">
+        <div class="help-faq-q">The page shows "waiting to accumulate packets" — what do I do?</div>
+        <div class="help-faq-a">Just wait. NetSense needs at least <strong>10 packets</strong> (equal to the Sequence Timesteps value) before it can make its first prediction. If your network is quiet, try opening a browser and loading a website to generate traffic.</div>
+    </div>
+    <div class="help-faq">
+        <div class="help-faq-q">Dashboard tab says "go to Live Monitoring first" — why?</div>
+        <div class="help-faq-a">The Dashboard only shows results after the model has run. Either start a Live Capture and wait for predictions, or upload a PCAP file. Once predictions exist, switch to Dashboard.</div>
+    </div>
+    <div class="help-faq">
+        <div class="help-faq-q">All my predictions are HIGH / all LOW — is something wrong?</div>
+        <div class="help-faq-a">Not necessarily. If your network is very busy (downloading files, streaming video), HIGH is accurate. If it's idle, LOW is accurate. Try generating different traffic types and watch the predictions shift.</div>
+    </div>
+    <div class="help-faq">
+        <div class="help-faq-q">Can I use this on Windows?</div>
+        <div class="help-faq-a">Scapy works on Windows but requires <strong>Npcap</strong> to be installed (free from npcap.com). Run the terminal as Administrator instead of using <code>sudo</code>. PCAP upload mode works without any extra setup on Windows.</div>
+    </div>
+
+    <div style="text-align:center; padding:1.2rem 0 0.3rem; color:#64748b; font-family:'Space Mono',monospace; font-size:0.72rem;">
+        NetSense · Built with PyTorch, Streamlit & Scapy · Computer Networks Project
+    </div>
     </div>
     """)
 
