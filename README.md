@@ -32,8 +32,6 @@ Built as a Computer Networks course project by students of **VIT Chennai**, guid
 - **TCP AIMD simulation** — congestion window (cwnd) grows and collapses in real time based on AI predictions
 - **Animated traffic pipe** — visual indicator of current congestion state with colour-coded glow
 - **Dashboard tab** — AIMD graph, probability heatmap, class distribution pie, smoothed traffic timeline, packet length histogram
-- **Auto-refresh** — live mode refreshes every 2.5 seconds automatically
-- **Dark cyber UI** — custom glassmorphism CSS with Space Mono + Inter fonts
 
 ---
 
@@ -257,11 +255,7 @@ The script will:
 **PCAP parse returns empty dataframe**
 → NetSense only processes packets with an IP layer. Make sure your PCAP contains IP-level traffic (not pure Ethernet or loopback-only captures).
 
----
 
-## 📄 License
-
-This project was developed for academic purposes as part of the Computer Networks curriculum at VIT Chennai. Not licensed for commercial use.
 
 ---
 
