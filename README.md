@@ -16,7 +16,7 @@ Built as a Computer Networks course project by students of **VIT Chennai**, guid
 
 | Name | Roll No | GitHub |
 |------|---------|--------|
-| Kanika Rathore | 24BYB1080 | [@kanika-flow](https://github.com/kanika-flow) |
+| Kanika Rathore | 24BYB1080 | [@kanika10-hub](https://github.com/kanika10-hub) |
 | R Harish | 24BYB1159 | [@harish795r](https://github.com/harish795r) |
 | Akshaya H | 24BYB1124 | [@akshaya040806](https://github.com/akshaya040806) |
 
