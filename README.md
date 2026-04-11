@@ -44,9 +44,9 @@ cnproject/
 ├── train.py                    # LSTM model training script
 ├── tcp_udp_lstm_pytorch.pt     # Trained model weights (PyTorch)
 ├── output1.csv                 # Primary training dataset (394k packets)
-├── perfect_traffic.csv         # Synthetic clean traffic CSV (200 rows)
-├── wireshark_sample.csv        # Sample Wireshark export for testing (1000 rows)
-├── test_packets.csv            # Additional test packet CSV (500 rows)
+├── perfect_traffic.csv         # Synthetic clean traffic CSV 
+├── wireshark_sample.csv        # Sample Wireshark export for testing
+├── test_packets.csv            # Additional test packet CSV 
 ├── requirements.txt            # Python dependencies
 └── README.md                   # This file
 ```
