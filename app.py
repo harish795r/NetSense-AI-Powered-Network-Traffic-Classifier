@@ -466,6 +466,273 @@ def parse_pcap(file):
 
     return pd.DataFrame(data)
 
+import tempfile
+import os
+from fpdf import FPDF
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+def generate_pdf_report(preds, probs, df_raw, window_kb, current_status, low, med, high, total_pkts):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_fill_color(15, 23, 42) # #0f172a
+    pdf.rect(0, 0, 210, 297, "F")
+    pdf.set_text_color(224, 230, 240) # #e0e6f0
+    
+    pdf.set_font("Helvetica", style="B", size=16)
+    pdf.cell(0, 10, "NETSENSE TRAFFIC REPORT", ln=True, align="C")
+    pdf.set_font("Helvetica", size=12)
+    pdf.ln(5)
+    
+    # Centered Header text
+    pdf.set_font("Helvetica", style="B", size=13)
+    pdf.set_text_color(56, 189, 248) # #38bdf8
+    pdf.cell(0, 8, "REAL-TIME CONGESTION CONTROL", ln=True, align="C")
+    
+    # Status Pill
+    y_pill = pdf.get_y() + 2
+    pill_w = 56
+    if preds[-1] == 0:
+        pill_color = (34, 197, 94) # Green
+    elif preds[-1] == 1:
+        pill_color = (250, 204, 21) # Yellow
+    else:
+        pill_color = (239, 68, 68) # Red
+        
+    pdf.set_fill_color(*pill_color)
+    pdf.set_xy((210 - pill_w) / 2, y_pill)
+    pdf.rect((210 - pill_w) / 2, y_pill, pill_w, 8, "F")
+    pdf.set_text_color(255, 255, 255) # White text on pill
+    pdf.set_font("Helvetica", style="B", size=11)
+    pdf.cell(pill_w, 8, str(current_status), align="C")
+    pdf.ln(12)
+    
+    # TCP Window Dynamic Text
+    pdf.set_text_color(224, 230, 240)
+    pdf.set_font("Helvetica", size=11)
+    # manual center
+    w1 = pdf.get_string_width("Dynamic TCP Window Size (cwnd): ")
+    w2 = pdf.get_string_width(f"{window_kb} KB")
+    pdf.set_x((210 - (w1 + w2)) / 2)
+    pdf.cell(w1, 6, "Dynamic TCP Window Size (cwnd): ")
+    pdf.set_text_color(*pill_color)
+    pdf.set_font("Helvetica", style="B", size=11)
+    pdf.cell(w2, 6, f"{window_kb} KB", ln=True)
+    pdf.ln(8)
+    
+    # 4 Metric Cards
+    card_w = 42
+    card_h = 22
+    spacing = 4
+    start_x = (210 - (4 * card_w + 3 * spacing)) / 2
+    y_cards = pdf.get_y()
+    
+    cards_data = [
+        ("LIVE SEQUENCES", str(len(preds)), (56, 189, 248)),
+        ("LOW TRAFFIC", str(low), (96, 165, 250)),
+        ("MEDIUM TRAFFIC", str(med), (34, 197, 94)),
+        ("HIGH TRAFFIC", str(high), (239, 68, 68))
+    ]
+    
+    for i, (title, val, color) in enumerate(cards_data):
+        cx = start_x + (card_w + spacing) * i
+        # Draw Card Background
+        pdf.set_fill_color(17, 24, 39)
+        pdf.set_draw_color(30, 41, 59)
+        pdf.rect(cx, y_cards, card_w, card_h, "FD")
+        
+        # Draw Value
+        pdf.set_font("Helvetica", style="B", size=18)
+        pdf.set_text_color(*color)
+        pdf.set_xy(cx, y_cards + 4)
+        pdf.cell(card_w, 8, val, align="C")
+        
+        # Draw Title
+        pdf.set_font("Helvetica", size=7)
+        pdf.set_text_color(148, 163, 184)
+        pdf.set_xy(cx, y_cards + 14)
+        pdf.cell(card_w, 5, title, align="C")
+        
+    pdf.set_y(y_cards + card_h + 8)
+    
+    tmp_files = []
+    import numpy as np
+    
+    # ── TCP Simulation ──
+    sim_length = min(len(preds), 40)
+    sim_preds = preds[-sim_length:]
+    cwnd_history = []
+    events = []
+    cwnd, ssthresh = 1.0, 32.0
+    can_annotate = True
+    for t, p in enumerate(sim_preds):
+        cwnd_history.append(cwnd)
+        if cwnd >= 6.0: can_annotate = True
+        if p == 0:
+            cwnd = min(cwnd * 2, ssthresh) if cwnd * 2 <= ssthresh else cwnd + 1
+        elif p == 1:
+            ssthresh = max(2.0, cwnd // 2)
+            if can_annotate and cwnd >= 4.0:
+                events.append((t, cwnd_history[-1], f"3 Ack SSthresh = {int(ssthresh)}", '3ack'))
+                can_annotate = False
+            cwnd = ssthresh
+        elif p == 2:
+            ssthresh = max(2.0, cwnd // 2)
+            if can_annotate and cwnd >= 4.0:
+                events.append((t, cwnd_history[-1], f"Time Out SSthresh = {int(ssthresh)}", 'timeout'))
+                can_annotate = False
+            cwnd = 1.0
+            
+    fig_tcp, ax_tcp = plt.subplots(figsize=(8, 3.2))
+    fig_tcp.patch.set_facecolor('#0f172a')
+    ax_tcp.set_facecolor('#111827')
+    ax_tcp.plot(np.arange(len(cwnd_history)), cwnd_history, color='#0ea5e9', linewidth=2.5, marker='o', markersize=5, markerfacecolor='#ef4444')
+    for (x, y, label, ev_type) in events:
+        ax_tcp.plot(x, y, marker='o', color='#ef4444', markersize=8)
+        if label != "":
+            y_offset = -6 if ev_type == '3ack' else 6
+            x_offset = 1 if ev_type == 'timeout' else 0.5
+            ax_tcp.annotate(label, (x, y), xytext=(x+x_offset, y+y_offset), color='#e0e6f0', fontsize=10, fontweight='bold')
+            ax_tcp.vlines(x, ymin=0, ymax=y, colors='#94a3b8', linestyles='dotted', alpha=0.9, linewidth=1.5)
+            ax_tcp.hlines(y, xmin=0, xmax=x, colors='#94a3b8', linestyles='dotted', alpha=0.9, linewidth=1.5)
+    ax_tcp.set_title("TCP Congestion Window (AIMD Simulation)", color='#94a3b8', fontsize=12)
+    ax_tcp.set_xlabel("Transmission Round (Latest 40)", color='#94a3b8', fontsize=10)
+    ax_tcp.set_ylabel("Cwnd Size", color='#94a3b8', fontsize=10)
+    ax_tcp.tick_params(colors='#e0e6f0')
+    ax_tcp.spines['bottom'].set_color('#1e293b')
+    ax_tcp.spines['left'].set_color('#1e293b')
+    ax_tcp.spines['top'].set_visible(False)
+    ax_tcp.spines['right'].set_visible(False)
+    ax_tcp.grid(color='#1e293b', linestyle='-', linewidth=0.3, alpha=0.5)
+    
+    y_max_bound = max(cwnd_history) if len(cwnd_history) > 0 else 10
+    ax_tcp.set_ylim(0, y_max_bound + 15)
+    ax_tcp.set_xlim(0, len(cwnd_history))
+
+    pf1 = tempfile.NamedTemporaryFile(suffix=".png", delete=False).name
+    fig_tcp.tight_layout()
+    fig_tcp.savefig(pf1, facecolor=fig_tcp.get_facecolor(), edgecolor='none')
+    plt.close(fig_tcp)
+    tmp_files.append(pf1)
+    
+    # ── Pie Chart ──
+    recent_preds = preds[-200:]
+    counts = [int(np.sum(np.array(recent_preds) == i)) for i in range(3)]
+    fig1, ax1 = plt.subplots(figsize=(4, 4))
+    fig1.patch.set_facecolor('#0f172a')
+    ax1.set_facecolor('#0f172a')
+    if sum(counts) > 0:
+        wedges, texts, autotexts = ax1.pie(counts, labels=["Low", "Medium", "High"], autopct='%1.1f%%', colors=["#60a5fa", "#34d399", "#f87171"], textprops={'color': '#e0e6f0', 'fontsize': 10}, wedgeprops={'edgecolor': '#0b0f1a', 'linewidth': 2})
+        for at in autotexts: at.set_color('#0b0f1a'); at.set_fontweight('bold')
+    ax1.set_title("Sequence Class Split", color='#94a3b8')
+    pf2 = tempfile.NamedTemporaryFile(suffix=".png", delete=False).name
+    fig1.savefig(pf2, facecolor=fig1.get_facecolor(), edgecolor='none')
+    plt.close(fig1)
+    tmp_files.append(pf2)
+
+    # ── Timeline Forecast ──
+    trace_preds = preds[-80:]
+    x = np.arange(len(trace_preds))
+    actual = np.roll(trace_preds, 1)
+    actual[0] = trace_preds[0]
+    y_pred, y_actual = np.array(trace_preds, dtype=float), np.array(actual, dtype=float)
+    
+    last_trend = y_pred[-5:]
+    future = []
+    for _ in range(40):
+        next_val = np.clip(round(np.mean(last_trend)), 0, 2)
+        future.append(next_val)
+        last_trend = np.append(last_trend[1:], next_val)
+    y_pred_extended = np.concatenate([y_pred, np.array(future)])
+    x_extended = np.arange(len(y_pred_extended))
+
+    def smooth(y, window=7): return np.convolve(y, np.ones(window)/window, mode='same')
+    y_pred_smooth, y_actual_smooth = smooth(y_pred_extended) + 0.12, smooth(y_actual) - 0.12
+    
+    fig2, ax2 = plt.subplots(figsize=(8, 4))
+    fig2.patch.set_facecolor('#0f172a')
+    ax2.set_facecolor('#111827')
+    ax2.plot(x, y_actual_smooth, color="#22c55e", linewidth=2.8, label="Actual Traffic")
+    ax2.plot(x_extended, y_pred_smooth, color="#ef4444", linewidth=2.8, label="Predicted Traffic")
+    ax2.axvspan(len(x)-1, len(x_extended), color='#ef4444', alpha=0.08)
+    ax2.set_yticks([0, 1, 2])
+    ax2.set_yticklabels(['Low', 'Medium', 'High'], color='#e0e6f0')
+    ax2.set_xlim(0, len(x_extended))
+    ax2.set_xlabel("Recent Sequence Index", color='#94a3b8')
+    ax2.set_ylabel("Traffic Level", color='#94a3b8')
+    ax2.tick_params(colors='#64748b')
+    ax2.spines['bottom'].set_color('#1e293b')
+    ax2.spines['left'].set_color('#1e293b')
+    ax2.spines['top'].set_visible(False)
+    ax2.spines['right'].set_visible(False)
+    ax2.legend(facecolor='#111827', edgecolor='none', labelcolor='white')
+    ax2.set_title("Prediction vs Actual Timeline", color='#94a3b8')
+    
+    pf3 = tempfile.NamedTemporaryFile(suffix=".png", delete=False).name
+    fig2.tight_layout()
+    fig2.savefig(pf3, facecolor=fig2.get_facecolor(), edgecolor='none')
+    plt.close(fig2)
+    tmp_files.append(pf3)
+    
+    # ── Explicit Exact Y Positioning to prevent FPDF gaps ──
+    y_tcp = y_cards + card_h + 12
+    pdf.image(pf1, x=10, y=y_tcp, w=190, h=70) # TCP Window
+    
+    y_pie = y_tcp + 70 + 8
+    pdf.image(pf2, x=6, y=y_pie, w=74, h=74) # Pie Chart
+    pdf.image(pf3, x=82, y=y_pie + 2, w=122, h=70) # Timeline Chart
+    
+    pdf.set_y(y_pie + 76)
+    
+    # ── Heatmap ──
+    pdf.add_page()
+    pdf.set_fill_color(15, 23, 42)
+    pdf.rect(0, 0, 210, 297, "F")
+    if probs is not None and len(probs) > 0:
+        fig5, ax5 = plt.subplots(figsize=(8, 2.5))
+        fig5.patch.set_facecolor('#0f172a')
+        ax5.set_facecolor('#0f172a')
+        prob_sample = np.array(probs[-60:]).T
+        sns.heatmap(prob_sample, ax=ax5, cmap="YlOrRd", yticklabels=["Low", "Med", "High"], linewidths=0.3, linecolor='#0b0f1a')
+        ax5.set_title("Probability Heatmap (Latest 60)", color='#94a3b8')
+        ax5.set_xlabel("Recent Sequence Index", color='#94a3b8')
+        ax5.tick_params(colors='#e0e6f0')
+        pf5 = tempfile.NamedTemporaryFile(suffix=".png", delete=False).name
+        fig5.tight_layout()
+        fig5.savefig(pf5, facecolor=fig5.get_facecolor(), edgecolor='none')
+        plt.close(fig5)
+        tmp_files.append(pf5)
+        pdf.image(pf5, x=10, w=190)
+        pdf.ln(5)
+    
+    # ── Packet dist ──
+    if df_raw is not None and 'Length' in df_raw.columns:
+        fig6, ax6 = plt.subplots(figsize=(8, 3))
+        fig6.patch.set_facecolor('#0f172a')
+        ax6.set_facecolor('#111827')
+        ax6.hist(df_raw['Length'].dropna(), bins=60, color='#818cf8', edgecolor='#0b0f1a', alpha=0.85)
+        ax6.set_title("Packet Length Distribution", color='#94a3b8')
+        ax6.set_xlabel("Packet Length (bytes)", color='#94a3b8')
+        ax6.set_ylabel("Count", color='#94a3b8')
+        ax6.tick_params(colors='#64748b')
+        ax6.spines['bottom'].set_color('#1e293b')
+        ax6.spines['left'].set_color('#1e293b')
+        ax6.spines['top'].set_visible(False)
+        ax6.spines['right'].set_visible(False)
+        pf6 = tempfile.NamedTemporaryFile(suffix=".png", delete=False).name
+        fig6.tight_layout()
+        fig6.savefig(pf6, facecolor=fig6.get_facecolor(), edgecolor='none')
+        plt.close(fig6)
+        tmp_files.append(pf6)
+        pdf.image(pf6, x=10, w=190)
+        
+    for pf in tmp_files:
+        if os.path.exists(pf):
+            try: os.remove(pf)
+            except: pass
+            
+    return bytes(pdf.output())
+
 # ─────────────────────────────────────────
 # DIALOGS
 # ─────────────────────────────────────────
@@ -1119,7 +1386,7 @@ with col_title:
 
 with col_opts:
     st.markdown("<br>", unsafe_allow_html=True)
-    b_learn, b_dev, b_help = st.columns([1, 1.5, 1])
+    b_learn, b_dev, b_help, b_dl = st.columns([1, 1.5, 1, 1.5])
     with b_learn:
         if st.button("📚 Learn", use_container_width=True):
             modal_learn()
@@ -1129,6 +1396,41 @@ with col_opts:
     with b_help:
         if st.button("❓ Help", use_container_width=True):
             modal_help()
+    with b_dl:
+        if 'preds' in st.session_state and st.session_state['preds'] is not None and len(st.session_state['preds']) > 0 and 'df_raw' in st.session_state and st.session_state['df_raw'] is not None:
+            preds = list(st.session_state['preds'])
+            df_raw = st.session_state['df_raw']
+            probs = st.session_state.get('probs', [])
+            total_pkts = len(df_raw)
+            low = int(sum(1 for p in preds if p == 0))
+            med = int(sum(1 for p in preds if p == 1))
+            high = int(sum(1 for p in preds if p == 2))
+            latest = preds[-1]
+            if latest == 0:
+                current_status = "LOW TRAFFIC (CLEAR)"
+                window_kb = "64"
+            elif latest == 1:
+                current_status = "MEDIUM TRAFFIC"
+                window_kb = "32"
+            else:
+                current_status = "HIGH CONGESTION!"
+                window_kb = "8"
+            
+            if st.button("⚙️ Prepare PDF Report", use_container_width=True):
+                with st.spinner("Compiling PDF Graphs..."):
+                    pdf_bytes = generate_pdf_report(preds, probs, df_raw, window_kb, current_status, low, med, high, total_pkts)
+                    st.session_state['cached_pdf'] = pdf_bytes
+            
+            if 'cached_pdf' in st.session_state:
+                st.download_button(
+                    label="📥 Download PDF",
+                    data=st.session_state['cached_pdf'],
+                    file_name="netsense_report.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+        else:
+            st.button("⚙️ Prepare PDF Report", use_container_width=True, disabled=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
