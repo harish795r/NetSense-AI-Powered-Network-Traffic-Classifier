@@ -1679,130 +1679,30 @@ with tab1:
     if 'live_buffer' not in st.session_state:
          st.session_state['live_buffer'] = []
     if mode == "🔴 Live Capture (Npcap)":
-
         st.markdown('<div class="section-header">Live Network Traffic Interception</div>', unsafe_allow_html=True)
         st.markdown('<div class="info-box">Simulated real-time packet stream (cloud-safe mode).</div>', unsafe_allow_html=True)
-    
-        # ─────────────────────────────────────────
-        # LOAD DATASET (ONCE)
-        # ─────────────────────────────────────────
-        @st.cache_data
-        def load_stream_data():
-            return pd.read_csv("perfect_traffic.csv")  # your dataset
-    
-        df_full = load_stream_data()
-    
-        # ─────────────────────────────────────────
-        # SESSION INIT
-        # ─────────────────────────────────────────
-        if "stream_index" not in st.session_state:
-            st.session_state.stream_index = 0
-    
-        if "live_buffer" not in st.session_state:
-            st.session_state.live_buffer = []
-    
-        # ─────────────────────────────────────────
-        # CONTROL BUTTONS (UNCHANGED UI)
-        # ─────────────────────────────────────────
-        col_a, col_b = st.columns([1, 1])
-    
-        with col_a:
-            if not st.session_state['capturing']:
-                if st.button("▶️ Start Live Capture"):
-                    st.session_state['capturing'] = True
-                    st.rerun()
-            else:
-                if st.button("⏸️ Pause Capture"):
-                    st.session_state['capturing'] = False
-                    st.rerun()
-    
-        with col_b:
-            if st.button("🗑️ Clear Buffer & Dashboard"):
-                st.session_state.live_buffer = []
-                st.session_state.stream_index = 0
-                for key in ['df_raw', 'df_proc', 'preds', 'probs']:
-                    if key in st.session_state:
-                        del st.session_state[key]
-                st.rerun()
-    
-        # ─────────────────────────────────────────
-        # 🔴 SIMULATED STREAM (REPLACES SCAPY)
-        # ─────────────────────────────────────────
-        timesteps = 10
+        if 'live_buffer' not in st.session_state:
+            st.session_state['live_buffer'] = []
         chunk_size = 5
-
-        # ✅ SIMULATE LIVE PACKETS EVERY RERUN
-        chunk_size = 5
-        
-        new_data = pd.DataFrame({
-            "Timestamp": np.arange(chunk_size),
-            "Length": np.random.randint(60, 1500, chunk_size),
-            "Protocol": np.random.choice(["TCP", "UDP"], chunk_size)
-        })
-        
+        new_data = pd.DataFrame({"Timestamp": np.arange(chunk_size),"Length": np.random.randint(60, 1500, chunk_size),"Protocol": np.random.choice(["TCP", "UDP"], chunk_size)})
         st.session_state['live_buffer'].extend(new_data.to_dict('records'))
-    
-        if st.session_state['capturing']:
-    
-            start = st.session_state.stream_index
-            end = start + chunk_size
-    
-            df_chunk = df_full.iloc[start:end].copy()
-    
-            # loop stream
-            st.session_state.stream_index = end % len(df_full)
-    
-            # add slight randomness → feels live
-            if "Length" in df_chunk.columns:
-                df_chunk["Length"] += np.random.randint(-5, 5, size=len(df_chunk))
-    
-            # append to buffer
-            st.session_state.live_buffer.extend(df_chunk.to_dict("records"))
-    
-        # ─────────────────────────────────────────
-        # 🔁 USE YOUR EXISTING PIPELINE (UNCHANGED)
-        # ─────────────────────────────────────────
-        packet_buffer = st.session_state.get("live_buffer", [])
-    
-        if st.session_state['capturing'] and len(packet_buffer) < (timesteps + 1):
-            st.info(f"⏳ Streaming packets... {len(packet_buffer)}/{timesteps+1}")
-    
-        if len(packet_buffer) >= (timesteps + 1):
-    
-            with st.spinner("Monitoring live network..."):
-    
-                current_pkts = packet_buffer
-    
-                df_raw = pd.DataFrame(current_pkts)
-                df_proc = preprocess(df_raw)
-                X_seq, features = make_sequences(df_proc, timesteps)
-    
-                if len(X_seq) > 0:
-                    try:
-                        model = load_model(model_path)
-                        preds, probs = predict(model, X_seq)
-    
-                        st.session_state['preds'] = preds
-                        st.session_state['probs'] = probs
-                        st.session_state['df_proc'] = df_proc
-                        st.session_state['df_raw'] = df_raw
-    
-                    except Exception as e:
-                        st.error(f"❌ Model prediction error: {e}")
-                        st.stop()
-    
-            preds = st.session_state.get('preds', [])
-    
-            if not isinstance(preds, (list, np.ndarray)) or len(preds) == 0:
-                st.warning("⏳ Waiting for predictions...")
-                st.stop()
-    
-            recent_pred = preds[-1]
-            import time
+        df = pd.DataFrame(st.session_state['live_buffer'])
+        st.write("📦 Packets received:", len(df))
+        if len(df) < 11:
+            st.warning(f"⏳ Streaming packets... {len(df)}/11")
+        else:
+            df_processed = preprocess(df)
+            X_seq, _ = make_sequences(df_processed)
+            if len(X_seq) == 0:
+                st.warning("Not enough sequences yet...")
+            else:
+                preds, probs = predict(model, X_seq)
+                latest = preds[-1]
+                st.success(f"✅ Prediction Running → {LABEL_NAMES[latest]}")
 
-            if st.session_state['capturing']:
-                time.sleep(1)
-                st.rerun()
+        import time
+        time.sleep(1)
+        st.rerun()
         
     elif mode == "📂 Upload PCAP File":
 
