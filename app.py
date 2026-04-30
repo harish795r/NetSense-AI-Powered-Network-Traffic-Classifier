@@ -1784,6 +1784,11 @@ with tab1:
                 st.stop()
     
             recent_pred = preds[-1]
+            import time
+
+            if st.session_state['capturing']:
+                time.sleep(1)
+                st.rerun()
         
     elif mode == "📂 Upload PCAP File":
 
