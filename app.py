@@ -1674,7 +1674,10 @@ with tab1:
     if prev_mode and prev_mode != mode:
         st.session_state['pdf_ready'] = False
         st.session_state['cached_pdf'] = None
-    
+
+    # ✅ INIT BUFFER (only once)
+    if 'live_buffer' not in st.session_state:
+         st.session_state['live_buffer'] = []
     if mode == "🔴 Live Capture (Npcap)":
 
         st.markdown('<div class="section-header">Live Network Traffic Interception</div>', unsafe_allow_html=True)
@@ -1727,6 +1730,17 @@ with tab1:
         # ─────────────────────────────────────────
         timesteps = 10
         chunk_size = 5
+
+        # ✅ SIMULATE LIVE PACKETS EVERY RERUN
+        chunk_size = 5
+        
+        new_data = pd.DataFrame({
+            "Timestamp": np.arange(chunk_size),
+            "Length": np.random.randint(60, 1500, chunk_size),
+            "Protocol": np.random.choice(["TCP", "UDP"], chunk_size)
+        })
+        
+        st.session_state['live_buffer'].extend(new_data.to_dict('records'))
     
         if st.session_state['capturing']:
     
