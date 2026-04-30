@@ -1552,16 +1552,19 @@ with col_opts:
             low = int(sum(1 for p in preds if p == 0))
             med = int(sum(1 for p in preds if p == 1))
             high = int(sum(1 for p in preds if p == 2))
-            latest = preds[-1]
-            if latest == 0:
-                current_status = "LOW TRAFFIC (CLEAR)"
-                window_kb = "64"
-            elif latest == 1:
+            
+            p = probs[-1]
+            if p[2] > 0.65:
+                current_status = "HIGH CONGESTION!"
+                window_kb = "8"
+            elif p[1] > 0.45:
                 current_status = "MEDIUM TRAFFIC"
                 window_kb = "32"
             else:
-                current_status = "HIGH CONGESTION!"
-                window_kb = "8"
+                current_status = "LOW TRAFFIC (CLEAR)"
+                window_kb = "64"
+
+            st.write("Probabilities:", p)
             
             if 'pdf_ready' in st.session_state and st.session_state['pdf_ready']:
                 def reset_pdf_state():
