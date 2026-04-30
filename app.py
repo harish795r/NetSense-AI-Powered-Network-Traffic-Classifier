@@ -520,7 +520,7 @@ def preprocess(df):
     df['packet_count'] = 1
     df['avg_size'] = df['Length']
     df['size_variation'] = df['Length'].diff().fillna(0)
-    df['packet_rate'] = df['Length'].rolling(2).sum().fillna(0)
+    df['packet_rate'] = df['Length'].rolling(5).sum().fillna(0)
     df['rate_change'] = df['packet_rate'].diff().fillna(0)
     return df
 
@@ -549,7 +549,8 @@ def predict(model, X_seq):
     try:
         X_scaled = scaler.transform(X_seq.reshape(-1, nfeatures)).reshape(nsamples, ntimesteps, nfeatures)
     except:
-        X_scaled = scaler.fit_transform(X_seq.reshape(-1, nfeatures)).reshape(nsamples, ntimesteps, nfeatures)
+        st.error("❌ Scaler not found or mismatch — predictions unreliable")
+        return np.zeros(len(X_seq)), np.zeros((len(X_seq), 3))
         
     tensor = torch.tensor(X_scaled, dtype=torch.float32)
     with torch.no_grad():
