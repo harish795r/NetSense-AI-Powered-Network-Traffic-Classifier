@@ -1673,222 +1673,114 @@ with tab1:
         st.session_state['cached_pdf'] = None
     
     if mode == "🔴 Live Capture (Npcap)":
-        st.markdown('<div class="section-header">Live Network Traffic Interception</div>', unsafe_allow_html=True)
-        st.markdown('<div class="info-box">Sniffing live packets on your network interface. Requires Streamlit to be run with root/sudo privileges.</div>', unsafe_allow_html=True)
-    
-        col_a, col_b = st.columns([1, 1])
-        with col_a:
-            if not st.session_state['capturing']:
-                if st.button("▶️ Start Live Capture"):
-                    st.session_state['capturing'] = True
-                    stop_event.clear()
-                    # Start background thread if not alive
-                    if not any(t.name == "SniffThread" for t in threading.enumerate()):
-                        t = threading.Thread(target=sniff_traffic, name="SniffThread", daemon=True)
-                        t.start()
-                    st.rerun()
-            else:
-                if st.button("⏸️ Pause Capture"):
-                    st.session_state['capturing'] = False
-                    stop_event.set()
-                    st.rerun()
-                    
-        with col_b:
-            if st.button("🗑️ Clear Buffer & Dashboard"):
-                packet_buffer.clear()
-                for key in ['df_raw', 'df_proc', 'preds', 'probs']:
-                    if key in st.session_state:
-                        del st.session_state[key]
+
+    st.markdown('<div class="section-header">Live Network Traffic Interception</div>', unsafe_allow_html=True)
+    st.markdown('<div class="info-box">Simulated real-time packet stream (cloud-safe mode).</div>', unsafe_allow_html=True)
+
+    # ─────────────────────────────────────────
+    # LOAD DATASET (ONCE)
+    # ─────────────────────────────────────────
+    @st.cache_data
+    def load_stream_data():
+        return pd.read_csv("perfect_traffic.csv")  # your dataset
+
+    df_full = load_stream_data()
+
+    # ─────────────────────────────────────────
+    # SESSION INIT
+    # ─────────────────────────────────────────
+    if "stream_index" not in st.session_state:
+        st.session_state.stream_index = 0
+
+    if "live_buffer" not in st.session_state:
+        st.session_state.live_buffer = []
+
+    # ─────────────────────────────────────────
+    # CONTROL BUTTONS (UNCHANGED UI)
+    # ─────────────────────────────────────────
+    col_a, col_b = st.columns([1, 1])
+
+    with col_a:
+        if not st.session_state['capturing']:
+            if st.button("▶️ Start Live Capture"):
+                st.session_state['capturing'] = True
+                st.rerun()
+        else:
+            if st.button("⏸️ Pause Capture"):
+                st.session_state['capturing'] = False
                 st.rerun()
 
-        # Determine if there's a fatal error
-        if len(packet_buffer) > 0 and 'Error' in packet_buffer[-1]:
-            err = packet_buffer[-1]['Error']
-            if "PermissionError" in err:
-                st.error("🛑 **CRITICAL ERROR: OPERATION NOT PERMITTED**")
-                st.warning("Scapy requires root/administrator privileges to open raw sockets for live interception.\n\nPlease stop this server and rerun it with:\n`sudo /home/xded11/Github/cnproject/venv/bin/streamlit run app.py`")
-            elif "ScapyNotInstalled" in err:
-                st.error("🛑 **CRITICAL ERROR: Scapy Not Found**")
-                st.warning("Please install scapy (`pip install scapy`) before running live capture.")
-            else:
-                st.error(f"🛑 **Sniffer Error:** {err}")
+    with col_b:
+        if st.button("🗑️ Clear Buffer & Dashboard"):
+            st.session_state.live_buffer = []
+            st.session_state.stream_index = 0
+            for key in ['df_raw', 'df_proc', 'preds', 'probs']:
+                if key in st.session_state:
+                    del st.session_state[key]
+            st.rerun()
+
+    # ─────────────────────────────────────────
+    # 🔴 SIMULATED STREAM (REPLACES SCAPY)
+    # ─────────────────────────────────────────
+    timesteps = 10
+    chunk_size = 5
+
+    if st.session_state['capturing']:
+
+        start = st.session_state.stream_index
+        end = start + chunk_size
+
+        df_chunk = df_full.iloc[start:end].copy()
+
+        # loop stream
+        st.session_state.stream_index = end % len(df_full)
+
+        # add slight randomness → feels live
+        if "Length" in df_chunk.columns:
+            df_chunk["Length"] += np.random.randint(-5, 5, size=len(df_chunk))
+
+        # append to buffer
+        st.session_state.live_buffer.extend(df_chunk.to_dict("records"))
+
+    # ─────────────────────────────────────────
+    # 🔁 USE YOUR EXISTING PIPELINE (UNCHANGED)
+    # ─────────────────────────────────────────
+    packet_buffer = st.session_state.get("live_buffer", [])
+
+    if st.session_state['capturing'] and len(packet_buffer) < (timesteps + 1):
+        st.info(f"⏳ Streaming packets... {len(packet_buffer)}/{timesteps+1}")
+
+    if len(packet_buffer) >= (timesteps + 1):
+
+        with st.spinner("Monitoring live network..."):
+
+            current_pkts = packet_buffer
+
+            df_raw = pd.DataFrame(current_pkts)
+            df_proc = preprocess(df_raw)
+            X_seq, features = make_sequences(df_proc, timesteps)
+
+            if len(X_seq) > 0:
+                try:
+                    model = load_model(model_path)
+                    preds, probs = predict(model, X_seq)
+
+                    st.session_state['preds'] = preds
+                    st.session_state['probs'] = probs
+                    st.session_state['df_proc'] = df_proc
+                    st.session_state['df_raw'] = df_raw
+
+                except Exception as e:
+                    st.error(f"❌ Model prediction error: {e}")
+                    st.stop()
+
+        preds = st.session_state.get('preds', [])
+
+        if not isinstance(preds, (list, np.ndarray)) or len(preds) == 0:
+            st.warning("⏳ Waiting for predictions...")
             st.stop()
-        
-        if st.session_state['capturing'] and len(packet_buffer) < (timesteps + 1):
-            st.info(f"⏳ Waiting for packets... {len(packet_buffer)}/{timesteps+1}")
-        # Process Current Queue
-        if len(packet_buffer) >= (timesteps + 1):
-            with st.spinner("Monitoring live network..." if st.session_state['capturing'] else "Processing recorded queue..."):
-                
-                # Slice safe copy of current packets
-                current_pkts = [p for p in packet_buffer if 'Error' not in p]
-                
-                if len(current_pkts) > timesteps:
-                    df_raw = pd.DataFrame(current_pkts)
-                    df_proc = preprocess(df_raw)
-                    X_seq, features = make_sequences(df_proc, timesteps)
 
-                    if len(X_seq) > 0:
-                        try:
-                            model = load_model(model_path)
-                            preds, probs = predict(model, X_seq)
-                            
-                            st.session_state['preds'] = preds
-                            st.session_state['probs'] = probs
-                            st.session_state['df_proc'] = df_proc
-                            st.session_state['df_raw'] = df_raw
-                            
-                        except Exception as e:
-                            st.error(f"❌ Model prediction error. Is the `.pt` file valid? \\n\\n`{e}`")
-                            st.stop()
-                elif st.session_state['capturing']:
-                    st.info(f"⏳ Waiting for packets. Captured {len(current_pkts)} / {timesteps+1} required for sequences...")
-            
-            
-            #st.write("DEBUG preds:", st.session_state.get('preds'))
-            #st.write("DEBUG length:", len(st.session_state.get('preds', [])))
-            
-            preds = st.session_state.get('preds', [])
-
-            # 🚨 ABSOLUTE SAFETY CHECK (handles ALL cases)
-            if not isinstance(preds, (list, np.ndarray)) or len(preds) == 0:
-                st.warning("⏳ Waiting for predictions... (need more packets)")
-                st.stop()
-
-            # ✅ SAFE ACCESS (will NEVER crash now)
-            recent_pred = preds[-1] if isinstance(preds, (list, np.ndarray)) and len(preds) > 0 else 0
-                
-            if recent_pred == 0:
-                status = "✅ LOW TRAFFIC (CLEAR)"
-                color = "#34d399" # Green
-                anim_dur = "0.5s" 
-                window_kb = "64"
-                window_pct = "100%"
-            elif recent_pred == 1:
-                status = "⚠️ MEDIUM TRAFFIC"
-                color = "#fbbf24" # Yellow
-                anim_dur = "2.0s"
-                window_kb = "32"
-                window_pct = "50%"
-            else:
-                status = "🛑 HIGH CONGESTION!"
-                color = "#f87171" # Red
-                anim_dur = "6.0s" 
-                window_kb = "8"
-                window_pct = "15%"
-
-            unique_id = color.replace('#','')
-            html_string = f"""
-            <style>
-            @keyframes pulse-glow-{unique_id} {{
-            0% {{ box-shadow: 0 0 5px {color}, 0 0 10px {color}; }}
-            50% {{ box-shadow: 0 0 20px {color}, 0 0 30px {color}; }}
-            100% {{ box-shadow: 0 0 5px {color}, 0 0 10px {color}; }}
-            }}
-            @keyframes flow-data-{unique_id} {{
-            0% {{ background-position: 200px 0; }}
-            100% {{ background-position: 0 0; }}
-            }}
-            .traffic-pipe-{unique_id} {{
-            height: 35px;
-            background: {PIPE_BG};
-            border-radius: 18px;
-            border: 2px solid rgba(255,255,255,0.05);
-            position: relative;
-            overflow: hidden;
-            margin: 0;
-            width: {window_pct};
-            transition: width 1s ease-in-out;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.9), 0 0 15px {color};
-            }}
-            .data-stream-{unique_id} {{
-            width: 200%;
-            height: 100%;
-            background-image: repeating-linear-gradient(
-            -45deg,
-            {color} 0,
-            {color} 15px,
-            transparent 15px,
-            transparent 30px
-            );
-            animation: flow-data-{unique_id} {anim_dur} linear infinite;
-            opacity: 0.85;
-            }}
-            .status-badge-{unique_id} {{
-            animation: pulse-glow-{unique_id} 2s infinite;
-            color: #111827;
-            background: {color};
-            padding: 6px 18px;
-            border-radius: 20px;
-            font-family: 'Space Mono', monospace;
-            font-weight: 700;
-            font-size: 1.1rem;
-            display: inline-block;
-            }}
-            .window-size-label {{
-            font-family: 'Space Mono', monospace;
-            font-size: 1.05rem;
-            color: {TEXT_COLOR};
-            margin-top: 20px;
-            }}
-            </style>
-            <div style="background: {CARD_BG}; border: 1px solid {CARD_BORDER}; border-radius: 12px; padding: 2rem; text-align: center; margin-top: 2rem;">
-            <div style="font-family: 'Space Mono', monospace; font-size: 1.2rem; color: {TITLE_COLOR}; margin-bottom: 15px; letter-spacing: 1px; text-transform: uppercase;">Real-Time Congestion Control</div>
-            <div class="status-badge-{unique_id}">{status}</div>
-            <br>
-            <div class="window-size-label">
-            Dynamic TCP Window Size (cwnd): <strong style="color: {color}; font-size: 1.2rem;">{window_kb} KB</strong>
-            </div>
-            <div style="width: 90%; background: rgba(0,0,0,0.4); height: 50px; border-radius: 25px; margin: 15px auto 20px; border: 1px dashed rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: flex-start; padding: 5px;">
-            <div class="traffic-pipe-{unique_id}">
-            <div class="data-stream-{unique_id}"></div>
-            </div>
-            </div>
-            <div style="font-size: 0.9rem; color: {SUBTEXT_COLOR}; font-family: 'Inter', sans-serif;">When the AI detects high traffic, the simulated TCP connection throttles the window size to prevent packet collision and loss.</div>
-            </div>
-            """
-            st.markdown(html_string, unsafe_allow_html=True)
-
-
-            # ── Metrics Row ──
-            st.markdown("<br>", unsafe_allow_html=True)
-            c1, c2, c3, c4 = st.columns(4)
-            counts = {0: int(np.sum(preds == 0)), 1: int(np.sum(preds == 1)), 2: int(np.sum(preds == 2))}
-
-            with c1:
-                st.markdown(f"""<div class="metric-card">
-                    <div class="metric-value">{len(preds):,}</div>
-                    <div class="metric-label">Live Sequences</div></div>""", unsafe_allow_html=True)
-            with c2:
-                st.markdown(f"""<div class="metric-card">
-                    <div class="metric-value" style="color:#60a5fa">{counts[0]:,}</div>
-                    <div class="metric-label">Low Traffic</div></div>""", unsafe_allow_html=True)
-            with c3:
-                st.markdown(f"""<div class="metric-card">
-                    <div class="metric-value" style="color:#34d399">{counts[1]:,}</div>
-                    <div class="metric-label">Medium Traffic</div></div>""", unsafe_allow_html=True)
-            with c4:
-                st.markdown(f"""<div class="metric-card">
-                    <div class="metric-value" style="color:#f87171">{counts[2]:,}</div>
-                    <div class="metric-label">High Traffic</div></div>""", unsafe_allow_html=True)
-
-            # ── Results Table ──
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown('<div class="section-header">Last 5 Predictions</div>', unsafe_allow_html=True)
-
-            result_df = pd.DataFrame({
-                'Sequence #': range(max(1, len(preds)-4), len(preds) + 1),
-                'Predicted Class': preds[-5:],
-                'Label': [LABEL_NAMES[p] for p in preds[-5:]],
-                'P(Low)': np.round(probs[-5:, 0], 3),
-                'P(Medium)': np.round(probs[-5:, 1], 3),
-                'P(High)': np.round(probs[-5:, 2], 3),
-            })
-            st.dataframe(result_df, width=1000)
-
-            st.info("🔀 Switch to the **Dashboard** tab to explore detailed live charts!")
-
-        # (Autorefresh trigger moved to bottom of script)
+        recent_pred = preds[-1]
         
     elif mode == "📂 Upload PCAP File":
 
