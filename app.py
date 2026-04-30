@@ -501,7 +501,15 @@ def load_model(model_path):
     model.eval()
     return model
 
+# ✅ LOAD MODEL ONCE
+model_path = "tcp_udp_lstm_pytorch.pt"
 
+try:
+    model = load_model(model_path)
+except Exception as e:
+    st.error(f"❌ Model loading failed: {e}")
+    st.stop()
+    
 def preprocess(df):
     df = df.copy()
     df['Protocol'] = df['Protocol'].fillna(0)
