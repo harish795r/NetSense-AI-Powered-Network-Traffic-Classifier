@@ -1712,7 +1712,14 @@ with tab1:
             lengths = np.random.normal(1200, 150, chunk_size)
         
         new_data = pd.DataFrame({
-            "Timestamp": np.arange(chunk_size),
+            # simulate realistic time gaps
+        if 'current_time' not in st.session_state:
+             st.session_state['current_time'] = 0
+        time_gaps = np.random.uniform(0.05, 0.2, chunk_size)  # seconds between packets
+        timestamps = []
+        for gap in time_gaps:
+           st.session_state['current_time'] += gap
+           timestamps.append(st.session_state['current_time']),
             "Length": np.clip(lengths, 60, 1500),
             "Protocol": np.random.choice(["TCP", "UDP"], chunk_size)
         })
