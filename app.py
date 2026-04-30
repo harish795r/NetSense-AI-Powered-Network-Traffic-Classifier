@@ -778,8 +778,25 @@ def generate_pdf_report(preds, probs, df_raw, window_kb, current_status, low, me
     fig2, ax2 = plt.subplots(figsize=(8, 4))
     fig2.patch.set_facecolor('#0f172a')
     ax2.set_facecolor('#111827')
-    ax2.plot(x, y_actual_smooth, color="#22c55e", linewidth=2.8, label="Actual Traffic")
-    ax2.plot(x_extended, y_pred_smooth, color="#ef4444", linewidth=2.8, label="Predicted Traffic")
+# FIX: match dimensions properly
+x_actual = np.arange(len(y_actual_smooth))
+x_pred = np.arange(len(y_pred_smooth))
+
+    ax2.plot(
+        x_actual,
+        y_actual_smooth,
+        color="#22c55e",
+        linewidth=2.8,
+        label="Actual Traffic"
+    )
+    
+    ax2.plot(
+        x_pred,
+        y_pred_smooth,
+        color="#ef4444",
+        linewidth=2.8,
+        label="Predicted Traffic"
+    )
     ax2.axvspan(len(x)-1, len(x_extended), color='#ef4444', alpha=0.08)
     ax2.set_yticks([0, 1, 2])
     ax2.set_yticklabels(['Low', 'Medium', 'High'], color='#e0e6f0')
